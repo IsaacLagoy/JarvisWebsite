@@ -1,15 +1,16 @@
 import { addressStore } from '$lib';
-import {error} from '@sveltejs/kit';
-import puppeteer, { Browser } from 'puppeteer';
+import { error } from '@sveltejs/kit';
+import puppeteer, { Browser } from 'puppeteer-core';
 import path from 'path';
 import fs from 'fs';
+import chromium from '@sparticuz/chromium';
 
 export function load() {
-    return {address: addressStore.get()}
+    return { address: addressStore.get() }
 };
 
 export const actions = {
-    'get-asce-data' : async({request}) => {
+    'get-asce-data': async ({ request }) => {
         // gets information entered by the user
         const form = await request.formData();
 
@@ -17,14 +18,18 @@ export const actions = {
 
         let browser: Browser;
         try {
-            // starts browser and goes to asce
+            console.log('Launching Puppeteer with Chromium settings...');
             browser = await puppeteer.launch({
-                headless: true,
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless
             });
+
             const page = await browser.newPage();
             // sets up download path
             let downloadPath = path.resolve('./static/downloads');
-            fs.mkdirSync(downloadPath, {recursive: true});
+            fs.mkdirSync(downloadPath, { recursive: true });
             // @ts-ignore
             await page._client().send('Page.setDownloadBehavior', {
                 behavior: 'allow',
@@ -45,7 +50,7 @@ export const actions = {
             let loads = ['Wind', 'Seismic', 'Ice', 'Snow', 'Rain', 'Flood', 'Tsunami', 'Tornado'];
             while (loads.length > 0) {
                 let selector = loads[loads.length - 1];
-                let elementExists = await page.evaluate(selector => !!document.querySelector(selector), 'label[for="'+selector+'"]');
+                let elementExists = await page.evaluate(selector => !!document.querySelector(selector), 'label[for="' + selector + '"]');
                 if (elementExists) {
                     await page.evaluate((selector) => {
                         const button = document.querySelector('#' + selector) as HTMLElement;
@@ -61,15 +66,16 @@ export const actions = {
                 button.click();
             });
             await sleep(7000);
-            
+
             // get report
             await page.evaluate(() => {
                 const button = document.querySelector('.waves-effect.waves-light.btn-large.blue.darken-4.report-button') as HTMLElement;
                 button.click();
             });
+
             // closes browser and sends file
             // @ts-ignore
-            page._client().on('Page.downloadProgress', async(event: { state: string; }) => {
+            page._client().on('Page.downloadProgress', async (event: { state: string; }) => {
                 if (event.state === 'completed') {
                     // file has been downloaded
                     await browser.close();
@@ -85,12 +91,13 @@ export const actions = {
                 };
             });
 
-        } catch {
-            error(200, 'Error when loading scraping page');
+        } catch (err) {
+            console.error('Error launching Puppeteer:', err);
+            throw error(500, 'Error when loading scraping page');
         };
     }
 };
 
-function sleep(ms:number) {
+function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
