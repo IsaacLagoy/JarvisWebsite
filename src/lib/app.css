@@ -1,0 +1,72 @@
+
+
+:root {
+    --red: #5a0000;
+}
+
+body {
+    margin: 0px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--red);
+}
+.page-box a :hover {
+    color: white;
+}
+
+/* top navigation for site */
+nav.top {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    height: 5vh;
+    margin: 0px;
+}
+nav.top a {
+    text-decoration: none;
+    color: var(--red);
+}
+nav.top a img {
+    height: 6vh;
+}
+nav.top a p {
+    margin: 2vh;
+}
+hr.top {
+    border: 1px solid black;
+}
+
+/* flex containers */
+.flex-column {
+    display:flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+/* page */
+.page-title {
+    text-align: center;
+    font-size: 7vw;
+}
+.page-box {
+    text-align: center;
+    background-color: lightgray;
+    border: 10px solid lightgray;
+    border-radius: 10px;
+    margin: 5vw;
+}
+
+/* single modifiers */
+.red {
+    color: var(--red);
+}
+.spacer-five {
+    height: 5vh;
+}
