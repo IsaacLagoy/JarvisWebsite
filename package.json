@@ -24,10 +24,10 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@sparticuz/chromium-min": "^126.0.0",
 		"fs-extra": "^11.2.0",
 		"puppeteer": "^22.13.1",
-		"puppeteer-core": "^22.14.0",
-		"svelte-multiselect": "^10.3.0",
-		"@sparticuz/chromium": "^1.0.0"
+		"puppeteer-core": "^22.15.0",
+		"svelte-multiselect": "^10.3.0"
 	}
 }

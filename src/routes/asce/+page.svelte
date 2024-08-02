@@ -1,6 +1,5 @@
 <script lang='ts'>
     import {writable} from 'svelte/store';
-    export let data;
 
     function download() {
         let link = document.createElement('a');
@@ -29,7 +28,7 @@
         <input
             name='address'
             type='text'
-            value={data.address}
+            value={'412 Sandy Ridge Dr, League City TX'}
             required
         />
     </label>

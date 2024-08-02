@@ -1,28 +1,21 @@
 import { addressStore } from '$lib';
-import { error } from '@sveltejs/kit';
-import puppeteer, { Browser } from 'puppeteer-core';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import puppeteer, { Browser } from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
-import chromium from '@sparticuz/chromium';
 
 export function load() {
     return { address: addressStore.get() };
 }
 
 export const actions = {
-    'get-asce-data': async ({ request }) => {
+    'get-asce-data': async ({ request }: RequestEvent) => {
         const form = await request.formData();
-        addressStore.set(form.get('address'));
+        addressStore.set(form.get('address') as string);
 
         let browser: Browser;
         try {
-            console.log('Launching Puppeteer with Chromium settings...');
-            browser = await puppeteer.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless
-            });
+            browser = await puppeteer.launch({headless: false});
 
             const page = await browser.newPage();
             let downloadPath = path.resolve('./static/downloads');
@@ -42,17 +35,18 @@ export const actions = {
             await page.select('#risk-level-selector', form.get('risk') as string);
             await page.select('#site-soil-class-selector', form.get('soil') as string);
 
-            let loads = ['Wind', 'Seismic', 'Ice', 'Snow', 'Rain', 'Flood', 'Tsunami', 'Tornado'];
-            while (loads.length > 0) {
-                let selector = loads[loads.length - 1];
-                let elementExists = await page.evaluate(selector => !!document.querySelector(selector), 'label[for="' + selector + '"]');
+            const loads = ['Wind', 'Seismic', 'Ice', 'Snow', 'Rain', 'Flood', 'Tsunami', 'Tornado'];
+            for (const selector of loads) {
+                const elementExists = await page.evaluate(
+                    (sel) => !!document.querySelector(sel),
+                    `label[for="${selector}"]`
+                );
                 if (elementExists) {
-                    await page.evaluate((selector) => {
-                        const button = document.querySelector('#' + selector) as HTMLElement;
+                    await page.evaluate((sel) => {
+                        const button = document.querySelector(`#${sel}`) as HTMLElement;
                         button.click();
                     }, selector);
                 }
-                loads.pop();
             }
 
             await sleep(3000);
@@ -68,16 +62,16 @@ export const actions = {
             });
 
             // @ts-ignore
-            page._client().on('Page.downloadProgress', async (event: { state: string; }) => {
+            page._client().on('Page.downloadProgress', async (event: { state: string }) => {
                 if (event.state === 'completed') {
                     await browser.close();
-                    downloadPath = path.resolve('./static/downloads/ASCEDesignHazardsReport.pdf');
-                    const fileContent = fs.readFileSync(downloadPath);
+                    const filePath = path.resolve('./static/downloads/ASCEDesignHazardsReport.pdf');
+                    const fileContent = fs.readFileSync(filePath);
 
                     return new Response(fileContent, {
                         headers: {
                             'Content-Type': 'application/octet-stream',
-                            'Content-Disposition': `attachment; filename="${path.basename(downloadPath)}"`
+                            'Content-Disposition': `attachment; filename="${path.basename(filePath)}"`
                         }
                     });
                 }
@@ -91,5 +85,5 @@ export const actions = {
 };
 
 function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }

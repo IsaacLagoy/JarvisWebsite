@@ -1,6 +1,7 @@
 {
-    "version": 2,
-    "builds": [
-        {"src": "src/routes/asce/*.ts", "use": "@vercel/node"}
-    ]
+    "build": {
+        "env": {
+            "PUPPETEER_EXECUTABLE_PATH": "/path/to/chromium"
+        }
+    }
 }
